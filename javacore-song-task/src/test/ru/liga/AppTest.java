@@ -1,59 +1,77 @@
 package ru.liga;
 
-import org.assertj.core.api.Assertions;
+import com.leff.midi.MidiFile;
+import com.leff.midi.event.NoteOn;
 import org.junit.Before;
 import org.junit.Test;
-import ru.liga.AnalysisMidi.*;
-import ru.liga.songtask.content.Content;
-import ru.liga.songtask.domain.SimpleMidiFile;
+import ru.liga.analysis.impl.DurationAnalysis;
+import ru.liga.analysis.impl.QuantityAnalysis;
+import ru.liga.analysis.impl.RangeAnalysis;
+import ru.liga.change.impl.TempoChange;
+import ru.liga.change.impl.TransposeChange;
+import ru.liga.songtask.domain.NoteSign;
 
-public class AppTest
-{
-    SimpleMidiFile simpleMidiFile ;
-    AllNotes allNotes;
-    AnalysisDiapoz analysisDiapoz;
-    AnalysisInterval analysisInterval;
-    AnalysisHeight analysisHeight;
-    AnalysisDuration analysisDuration;
+import java.io.InputStream;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+public class AppTest {
+    MidiFile midiFile;
+    DurationAnalysis durationAnalysis;
+    QuantityAnalysis quantityAnalysis;
+    RangeAnalysis rangeAnalysis;
+    TransposeChange transposeChange;
+    TempoChange tempoChange;
+
     @Before
-    public void setup()
-    {
-        simpleMidiFile = new SimpleMidiFile(Content.ZOMBIE);
-        allNotes = new AllNotes(simpleMidiFile);
-        analysisDiapoz = new AnalysisDiapoz(simpleMidiFile);
-        analysisInterval = new AnalysisInterval(simpleMidiFile);
-        analysisHeight = new AnalysisHeight(simpleMidiFile);
-        analysisDuration = new AnalysisDuration(simpleMidiFile);
-    }
-    @Test
-    public void Right_AllNotes()
-    {
-        Assertions.assertThat(allNotes.GetListNotes().size()).isEqualTo(11);
-    }
-    @Test
-    public void Right_AnalysisDiapoz()
-    {
-        Assertions.assertThat(analysisDiapoz.GetAnalysis().get(0)).isEqualTo("A5");
-        Assertions.assertThat(analysisDiapoz.GetAnalysis().get(1)).isEqualTo("E4");
-        Assertions.assertThat(analysisDiapoz.GetAnalysis().get(2)).isEqualTo("17");
-    }
-    @Test
-    public void Right_Analysisinterval()
-    {
-        Assertions.assertThat(analysisInterval.GetAnalysis().get(0)).isEqualTo(34);
-        Assertions.assertThat(analysisInterval.GetAnalysis().get(2)).isEqualTo(93);
-    }
-    @Test
-    public void Right_AnalysisHeight()
-    {
-        Assertions.assertThat(analysisHeight.GetAnalysis().get("E5")).isEqualTo(57);
-        Assertions.assertThat(analysisHeight.GetAnalysis().get("C5")).isEqualTo(12);
-    }
-    @Test
-    public void Right_AnalysisDuration()
-    {
-        Assertions.assertThat(analysisDuration.GetAnalysis().get(10975.6045f)).isEqualTo(15);
-        Assertions.assertThat(analysisDuration.GetAnalysis().get(18658.527f)).isEqualTo(25);
+    public void setup() throws Exception {
+        midiFile = new MidiFile(getFile("Wrecking Ball.mid"));
+        durationAnalysis = new DurationAnalysis(midiFile);
+        durationAnalysis.perform();
+        quantityAnalysis = new QuantityAnalysis(midiFile);
+        quantityAnalysis.perform();
+        rangeAnalysis = new RangeAnalysis(midiFile);
+        rangeAnalysis.perform();
+        transposeChange = new TransposeChange(midiFile, 2, "Wrecking Ball","C:\\Users\\ilyat\\HW2\\liga-internship\\javacore-song-task\\src\\main\\resources");
+        transposeChange.change();
+        tempoChange = new TempoChange(midiFile, 20, "Wrecking Ball","C:\\Users\\ilyat\\HW2\\liga-internship\\javacore-song-task\\src\\main\\resources");
+        tempoChange.change();
     }
 
+    @Test
+    public void RightDurationAnalysisFirstAndLast() {
+        assertThat(durationAnalysis.getDurations().get(124)).isEqualTo(9);
+        assertThat(durationAnalysis.getDurations().get(745)).isEqualTo(16);
+    }
+
+    @Test
+    public void RightRangeAnalysis() {
+        assertThat(rangeAnalysis.getMaxNote().sign().fullName()).isEqualTo("F3");
+        assertThat(rangeAnalysis.getMinNote().sign().fullName()).isEqualTo("A#4");
+        assertThat(rangeAnalysis.getRange()).isEqualTo(17);
+    }
+
+    @Test
+    public void RightQuantityAnalysisFirstAndLast() {
+        assertThat(quantityAnalysis.getSigns().get(NoteSign.F_3.ordinal())).isEqualTo(5);
+        assertThat(quantityAnalysis.getSigns().get(NoteSign.A_SHARP_4.ordinal())).isEqualTo(79);
+    }
+
+    @Test
+    public void RightTempoChange() {
+        assertThat(tempoChange.getTempo().getBpm()).isEqualTo(144);
+    }
+
+    @Test
+    public void RightTransposeChange() {
+        assertThat(((NoteOn)transposeChange.getMidiFile().getTracks().get(9).getEvents().last()).getNoteValue()).isEqualTo(72);
+    }
+
+    private InputStream getFile(String fileName) {
+        InputStream result;
+        ClassLoader classLoader = getClass().getClassLoader();
+        result = classLoader.getResourceAsStream(fileName);
+        return result;
+    }
 }
+
