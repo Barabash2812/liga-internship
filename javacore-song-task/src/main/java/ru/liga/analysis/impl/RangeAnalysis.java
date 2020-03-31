@@ -9,20 +9,16 @@ import ru.liga.analysis.util.AnalysisUtil;
 import ru.liga.exception.MidiTrackNotFoundException;
 import ru.liga.songtask.domain.Note;
 
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-public class RangeAnalysis implements Analyzer {
+public class RangeAnalysis extends Analyzer {
 
     private static Logger allLogger = LoggerFactory.getLogger(RangeAnalysis.class);
-    private MidiFile midiFile;
-    private MidiTrack voiceTrack;
-    private Note minNote;
-    private Note maxNote;
-    private Integer range;
 
     public RangeAnalysis(MidiFile midiFile) {
-        this.midiFile = midiFile;
+        super(midiFile);
     }
 
     @Override
@@ -30,6 +26,7 @@ public class RangeAnalysis implements Analyzer {
         allLogger.info("Range analysis started");
         Long start = System.nanoTime();
 
+        MidiTrack voiceTrack;
         try {
             voiceTrack = AnalysisUtil.getVoiceTrack(midiFile);
         } catch (MidiTrackNotFoundException e) {
@@ -38,35 +35,22 @@ public class RangeAnalysis implements Analyzer {
         }
 
         List<Note> trackNotes = AnalysisUtil.eventsToNotes(voiceTrack.getEvents());
-        minNote = trackNotes.stream().min(Comparator.comparing(Note::sign)).get();
-        maxNote = trackNotes.stream().max(Comparator.comparing(Note::sign)).get();
-        range = maxNote.sign().ordinal() - minNote.sign().ordinal();
+        Note minNote = trackNotes.stream().min(Comparator.comparing(Note::sign)).get();
+        Note maxNote = trackNotes.stream().max(Comparator.comparing(Note::sign)).get();
+        Integer range = maxNote.sign().ordinal() - minNote.sign().ordinal();
 
         Long end = System.nanoTime();
+
+        result.addAll(Arrays.asList(minNote, maxNote, range));
+        report = report();
+
         allLogger.info("Range analysis completed. Elapsed time: {}ms", (end - start) / 1000000);
     }
 
-    @Override
     public String report() {
         return "Анализ диапазона: \n" +
-                "верхняя: " + maxNote.sign().fullName() + "\n" +
-                "нижняя: " + minNote.sign().fullName() + "\n" +
-                "диапазон: " + range + "\n";
-    }
-
-    public MidiTrack getVoiceTrack() {
-        return voiceTrack;
-    }
-
-    public Note getMinNote() {
-        return minNote;
-    }
-
-    public Note getMaxNote() {
-        return maxNote;
-    }
-
-    public Integer getRange() {
-        return range;
+                "верхняя: " + ((Note) result.get(0)).sign().fullName() + "\n" +
+                "нижняя: " + ((Note) result.get(1)).sign().fullName() + "\n" +
+                "диапазон: " + (Integer) result.get(2) + "\n";
     }
 }

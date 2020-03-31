@@ -29,11 +29,11 @@ public class AnalysisUtil {
         MidiTrack textTrack;
         List<MidiTrack> trackList = midiFile.getTracks();
 
-            textTrack = trackList.stream()
-                    .filter(track -> track.getEvents().stream()
-                            .filter(event -> event instanceof Text).count() == track.getEvents().size() - 1)
-                    .findFirst()
-                    .orElseThrow( () -> new MidiTrackNotFoundException("Text track not found"));
+        textTrack = trackList.stream()
+                .filter(track -> track.getEvents().stream()
+                        .filter(event -> event instanceof Text).count() == track.getEvents().size() - 1)
+                .findFirst()
+                .orElseThrow(() -> new MidiTrackNotFoundException("Text track not found"));
 
         List<MidiEvent> textEventsList = new ArrayList<>(textTrack.getEvents());
         textEventsList.sort(Comparator.naturalOrder());

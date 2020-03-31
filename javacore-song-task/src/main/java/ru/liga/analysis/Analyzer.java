@@ -1,9 +1,22 @@
 package ru.liga.analysis;
 
-public interface Analyzer {
+import com.leff.midi.MidiFile;
+import lombok.Getter;
 
-    void perform() throws Exception;
+import java.util.ArrayList;
 
-    String report();
+@Getter
+public abstract class Analyzer {
 
+    protected MidiFile midiFile;
+    protected String report;
+    protected ArrayList<Object> result = new ArrayList<>();
+
+    public Analyzer(MidiFile midiFile) {
+        this.midiFile = midiFile;
+    }
+
+    public abstract void perform();
+
+    public abstract String report();
 }

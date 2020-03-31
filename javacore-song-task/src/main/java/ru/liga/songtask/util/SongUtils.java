@@ -4,8 +4,9 @@ public class SongUtils {
 
     /**
      * Перевод тиков в миллисекунды
-     * @param bpm - количество ударов в минуту (темп)
-     * @param resolution - midiFile.getResolution()
+     *
+     * @param bpm          - количество ударов в минуту (темп)
+     * @param resolution   - midiFile.getResolution()
      * @param amountOfTick - то что переводим в миллисекунды
      * @return
      */

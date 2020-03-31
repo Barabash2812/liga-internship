@@ -16,22 +16,20 @@ import ru.liga.songtask.util.SongUtils;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class DurationAnalysis implements Analyzer {
+public class DurationAnalysis extends Analyzer {
 
     private static Logger allLogger = LoggerFactory.getLogger(DurationAnalysis.class);
-    private MidiFile midiFile;
-    private MidiTrack voiceTrack;
-    private Map<Integer, Integer> durations = new TreeMap<>();
-    private Tempo tempo;
 
     public DurationAnalysis(MidiFile midiFile) {
-        this.midiFile = midiFile;
+        super(midiFile);
     }
 
-    @Override
     public void perform() {
         allLogger.info("Duration analysis started");
         Long start = System.nanoTime();
+
+        Map<Integer, Integer> durations = new TreeMap<>();
+        Tempo tempo;
 
         try {
             tempo = (Tempo) midiFile.getTracks().get(0).getEvents().stream()
@@ -43,6 +41,7 @@ public class DurationAnalysis implements Analyzer {
             return;
         }
 
+        MidiTrack voiceTrack;
         try {
             voiceTrack = AnalysisUtil.getVoiceTrack(midiFile);
         } catch (MidiTrackNotFoundException e) {
@@ -62,27 +61,19 @@ public class DurationAnalysis implements Analyzer {
                 }).forEach(keyValue -> durations.put(keyValue.getKey(), keyValue.getValue()));
 
         Long end = System.nanoTime();
+
+        result.add(durations);
+        report = report();
+
         allLogger.info("Duration analysis completed. Elapsed time: {}ms", (end - start) / 1000000);
     }
 
-    @Override
     public String report() {
         StringBuilder result = new StringBuilder("Анализ длительности нот (мс):\n");
+        Map<Integer, Integer> durations = (Map<Integer, Integer>) this.result.get(0);
         for (Map.Entry<Integer, Integer> entry : durations.entrySet()) {
             result.append(entry.getKey()).append("мс: ").append(entry.getValue()).append("\n");
         }
         return result.toString();
-    }
-
-    public MidiTrack getVoiceTrack() {
-        return voiceTrack;
-    }
-
-    public Map<Integer, Integer> getDurations() {
-        return durations;
-    }
-
-    public Tempo getTempo() {
-        return tempo;
     }
 }
